@@ -1,0 +1,72 @@
+version: "3.7"
+services:
+  spark-master:
+    image: bitnami/spark:latest
+    container_name: spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+    ports:
+      - "8080:8080" # Expose Spark Web UI port
+      - "7077:7077"
+    volumes:
+      - ./spark-master:/bitnami/spark
+    networks:
+      - spark-network
+
+  spark-worker-1:
+    image: bitnami/spark:latest
+    container_name: spark-worker-1
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+    volumes:
+      - ./spark-worker-1:/bitnami/spark
+    networks:
+      - spark-network
+
+  spark-worker-2:
+    image: bitnami/spark:latest
+    container_name: spark-worker-2
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2g
+      - SPARK_WORKER_CORES=1
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+    volumes:
+      - ./spark-worker-2:/bitnami/spark
+    networks:
+      - spark-network
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb-service
+    ports:
+      - "27017:27017"
+      - "28017:28017"  # Expose MongoDB HTTP interface
+    volumes:
+      - ./mongodb:/data/db
+    networks:
+      - spark-network
+
+  pyspark-service:
+    build: ../type2/api
+    container_name: pyspark-service
+    depends_on:
+      - spark-master
+    networks:
+      - spark-network
+
+networks:
+  spark-network:
+    driver: bridge
